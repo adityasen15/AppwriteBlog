@@ -17,8 +17,14 @@ export default function PostForm({ post }) {
 
     const navigate = useNavigate();
     const userData = useSelector((state) => state.auth.userData);
+    
 
     const submit = async (data) => {
+    console.log("🚀 Submit triggered");
+    console.log("🧾 Form data:", data);
+    console.log("🧑‍💻 Redux userData:", userData);
+
+        console.log(data);
         if (post) {
             const file = data.image[0] ? await appwriteService.uploadFile(data.image[0]) : null;
 
@@ -26,10 +32,16 @@ export default function PostForm({ post }) {
                 appwriteService.deleteFile(post.featuredImage);
             }
 
-            const dbPost = await appwriteService.updatePost(post.$id, {
-                ...data,
-                featuredImage: file ? file.$id : undefined,
-            });
+            // const dbPost = await appwriteService.updatePost(post.$id, {
+            //     ...data,
+            //     featuredImage: file ? file.$id : undefined,
+            // });
+            const updatePayload = { ...data };
+            if (file && file.$id) {
+                updatePayload.featuredImage = file.$id;
+            }
+            const dbPost = await appwriteService.updatePost(post.$id, updatePayload);
+
 
             if (dbPost) {
                 navigate(`/post/${dbPost.$id}`);
@@ -37,14 +49,41 @@ export default function PostForm({ post }) {
         } else {
             const file = await appwriteService.uploadFile(data.image[0]);
 
-            if (file) {
+            if (file && file.$id) {
                 const fileId = file.$id;
-                data.featuredImage = fileId;
-                const dbPost = await appwriteService.createPost({ ...data, userId: userData.$id });
+                console.log("Creating post with payload:", {
+                    title: data.title,
+                    slug: data.slug,
+                    content: data.content,
+                    featuredImage: fileId,
+                    status: data.status,
+                    userId: userData?.$id,
+                });
+
+                if (!userData || !userData.$id) {
+                    console.error("User not logged in or userData missing");
+                    return;
+                }
+
+
+                try {
+                const dbPost = await appwriteService.createPost({
+                    title: data.title,
+                    slug: data.slug,
+                    content: data.content,
+                    status: data.status,
+                    featuredImage: fileId,
+                    userId: userData.$id });
 
                 if (dbPost) {
                     navigate(`/post/${dbPost.$id}`);
                 }
+                } catch (error) {
+                    console.error("Error creating post:", error);
+
+            }
+        }else {
+                console.error("Failed to upload image");
             }
         }
     };
@@ -113,7 +152,7 @@ export default function PostForm({ post }) {
                     className="mb-4"
                     {...register("status", { required: true })}
                 />
-                <Button type="submit" bgColor={post ? "bg-green-500" : undefined} className="w-full">
+                <Button type="submit" variant={post ? "bg-green-500" : undefined} className="w-full">
                     {post ? "Update" : "Submit"}
                 </Button>
             </div>

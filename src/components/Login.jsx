@@ -69,10 +69,13 @@ function Login() {
                     required: true,
                 })}
                 />
-                <Button
+                {/* <Button
                 type="submit"
                 className="w-full"
-                >Sign in</Button>
+                >Sign in</Button> */}
+                 <Button type = "submit" variant="bg-green-600" text="text-black" className="mt-4">
+                     Sign in</Button>
+                    
             </div>
         </form>
         </div>

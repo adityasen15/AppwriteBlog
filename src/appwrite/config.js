@@ -1,4 +1,4 @@
-import conf from '../../conf/conf';
+import conf from '../../conf/conf'
 import { Client, ID, Databases, Storage, Query } from "appwrite";
 
 export class Service{
@@ -8,12 +8,18 @@ export class Service{
     
     constructor(){
         console.log("conf.appwriteUrl", conf.appwriteUrl);
+        console.log("Project ID:", conf.appwriteProjectId);
 
         this.client
         .setEndpoint(conf.appwriteUrl)
         .setProject(conf.appwriteProjectId);
+
+
         this.databases = new Databases(this.client);
         this.bucket = new Storage(this.client);
+    }
+    getCurrentUser(){
+        return this.account.get();
     }
 
     async createPost({title, slug, content, featuredImage, status, userId}){
@@ -21,17 +27,19 @@ export class Service{
             return await this.databases.createDocument(
                 conf.appwriteDatabaseId,
                 conf.appwriteCollectionId,
-                slug,
+                slug || ID.unique(),
                 {
                     title,
+                    slug,
                     content,
-                    featuredImage,
+                    featuredImage ,
                     status,
                     userId,
                 }
-            )
+            );
         } catch (error) {
             console.log("Appwrite serive :: createPost :: error", error);
+            throw error;
         }
     }
 
@@ -126,13 +134,19 @@ export class Service{
         }
     }
 
-    getFilePreview(fileId){
-        return this.bucket.getFilePreview(
-            conf.appwriteBucketId,
-            fileId
-        )
+//     getFilePreview(fileId){
+//         return this.bucket.getFilePreview(
+//             conf.appwriteBucketId,
+//             fileId
+//         )
+//     }
+// }
+
+    getFileUrl(fileId) {
+    return `${conf.appwriteUrl}/storage/buckets/${conf.appwriteBucketId}/files/${fileId}/view?project=${conf.appwriteProjectId}`;
     }
-}
+ }
+
 
 
 const service = new Service()
